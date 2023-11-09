@@ -183,6 +183,8 @@ export async function venderCocheACliente(req: Request, res: Response) {
       concesionario.coches = concesionario.coches.filter((c: Coche) => !(c.modelo === modelo && c.año === año));
       await cliente.save();
       await concesionario.save();
+
+      
       res.status(200).json( "Coche comprado con éxito", cliente, concesionario);
     } else {
       res.status(400).json("El cliente no tiene suficiente dinero para comprar el coche");
@@ -264,8 +266,8 @@ export async function eliminarCocheConcesionario(req: Request, res: Response) {
       res.status(404).json("Coche no encontrado en el concesionario");
       return;
     }
-    concesionario.coches.splice(indiceCoche, 1);
-    await concesionario.save();
+      //codigo para eliminar el coche del concesionario
+      await concesionario.save();
 
     res.status(200).json("Coche eliminado con éxito del concesionario");
   } catch (error) {
@@ -279,20 +281,20 @@ export async function eliminarCocheCliente(req: Request, res: Response) {
     //const { nombre, modelo, año } = req.params;
     const nombre =  "fernando"
     const modelo= "focus"
-    const año= "2023"
+    const año= 2023
     
     const cliente = await ClienteModel.findOne({ nombre }).populate("coches");
     if (!cliente) {
       res.status(404).json("Cliente no encontrado");
       return;
     }
-    const indiceCoche = cliente.coches.findIndex((coche: any) => coche.modelo === modelo && coche.año === parseInt(año));
+    const indiceCoche = cliente.coches.findIndex((coche: any) => coche.modelo == modelo && coche.año == año);
     if (indiceCoche === -1) {
       res.status(404).json("Coche no encontrado en el cliente");
       return;
     }
-    cliente.coches.splice(indiceCoche, 1);
-    await cliente.save();
+      //codigo para eliminar el coche del cliente
+      await cliente.save();
     res.status(200).json("Coche eliminado con éxito del cliente");
   } catch (error) {
     res.status(500).json("Error al eliminar coche del cliente");
@@ -306,7 +308,7 @@ export async function traspasarCocheEntreClientes(req: Request, res: Response) {
     const from_nombre =  "fernando"
     const to_nombre =  "david"
     const modelo= "focus"
-    const año= "2023"
+    const año= 2023
 
     const fromCliente = await ClienteModel.findOne({ nombre: from_nombre }).populate("coches");
     const toCliente = await ClienteModel.findOne({ nombre: to_nombre });
@@ -316,12 +318,13 @@ export async function traspasarCocheEntreClientes(req: Request, res: Response) {
       return;
     }
     const cocheIndex = fromCliente.coches.findIndex(
-      (coche) => coche.modelo === modelo && coche.año === parseInt(año)
+      (coche) => coche.modelo === modelo && coche.año === año
     );
 
     if (cocheIndex !== -1) {
       const cocheTraspasado = fromCliente.coches[cocheIndex];
-      fromCliente.coches.splice(cocheIndex, 1);
+      
+      //codigo para eliminar el coche del cliente original
       toCliente.coches.push(cocheTraspasado);
 
       await fromCliente.save();
