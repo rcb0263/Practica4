@@ -11,10 +11,6 @@ const env = await load();
 
 const URL_MONGO = env.MONGO_URL
 
-if(!URL_MONGO){
-  console.error("Debes definir la variable URL_MONGO")
-  Deno.exit(1)
-}
 console.info(URL_MONGO)
 
 
