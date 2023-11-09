@@ -5,7 +5,7 @@ import {load} from "https://deno.land/std@0.204.0/dotenv/mod.ts"
 
 
 //import { crearCoche, crearCliente, enviarCocheAConcesionario, venderCocheACliente, verCochesConcesionario, verCochesCliente, eliminarCocheConcesionario, eliminarCocheCliente, traspasarCoche, agregarDineroCliente, bloquearVentaConcesionario } from "./funciones.ts";
-import {EnviarCoche, sumarDineroCliente, traspasarCocheEntreClientes, eliminarCocheCliente, eliminarCocheConcesionario, ListaCochesConcesionario,listaCochesCliente, crearClientes, crearCoche, crearConcesionarios, venderCocheACliente} from "./funciones.ts";
+import {EnviarCoche, sumarDineroCliente, traspasarCocheEntreClientes, eliminarCocheCliente, eliminarCocheConcesionario, ListaCochesConcesionario,listaCochesCliente, crearClientes, crearCoche, crearConcesionarios, venderCocheACliente, eliminarCoche, } from "./funciones.ts";
 
 const env = await load();
 
@@ -22,13 +22,17 @@ try {
   api.use(express.json());
 
   api
-  .get("/concesionarios/crear", crearConcesionarios)
-  .get("/clientes/crear", crearClientes)
-  .get("/coche/crear", crearCoche)
-  .get("/coche/enviar", EnviarCoche)
-  .get("/coche/vender", venderCocheACliente)
+  .get("/concesionarios/crear", crearConcesionarios) //funciona
+  .get("/clientes/crear", crearClientes) //funciona
+  .get("/coche/crear", crearCoche) //funciona
+  .get("/coche/enviar", EnviarCoche) //parece funcionar
+  .get("/coche/eliminar/:modelo/:año", eliminarCoche)
+  //Como no se sabe si enviar funciona bien, esto esta basdado en otros ejercicios y la web de mongo
   .get("/clientes/listacoches/:nombre", listaCochesCliente )
+  .get("/coche/vender", venderCocheACliente) //desconocido
+
   .get("/concesionarios/listacoches/:ubicacion", ListaCochesConcesionario)
+
   .get("/concesionarios/:ubicacion/eliminar-coche/:modelo/:año", eliminarCocheConcesionario)
   .get("/clientes/:nombre/eliminar-coche/:modelo/:año", eliminarCocheCliente)
   .get("/clientes/traspasarcoche/:from_nombre/:to_nombre/:modelo/:año", traspasarCocheEntreClientes)

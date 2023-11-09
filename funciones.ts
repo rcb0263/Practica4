@@ -5,7 +5,6 @@ import { Response, Request } from "npm:express@4.18.2";
 import {ConcesionarioModel, ClienteModel, CocheModel } from "./models.ts";
 import { Coche } from "./models.ts";
 
-
 // Crear concesionarios
 export async function crearConcesionarios(req: Request, res: Response) {
   try {
@@ -36,7 +35,6 @@ export async function crearConcesionarios(req: Request, res: Response) {
     res.status(500).json("Error al crear concesionarios");
   }
 }
-
 // Crear clientes
 export async function crearClientes(req: Request, res: Response) {
   try {
@@ -70,11 +68,10 @@ export async function crearClientes(req: Request, res: Response) {
     res.status(500).json("Error al crear clientes");
   }
 }
-
 // Crear coches
 export async function crearCoche(req: Request, res: Response) {
   try {
-    // Datos del coche a crear, me daba problemas body params y req
+    // Datos del coche a crear, me daba problemas body req.params 
     const cocheData = { marca: "Ford", modelo: "Focus", año: 2023, precio: 25000 };
 
     const nuevoCoche = new CocheModel(cocheData);
@@ -87,12 +84,36 @@ export async function crearCoche(req: Request, res: Response) {
   }
 }
 
+export async function elimCoche(req: Request, res: Response) {
+  try {
+   // const { modelo, año } = req.params;
+    const modelo="Focus"
+    const año=2023
+    eliminarCoche(req, res, modelo,año)
+
+  } catch (error) {
+    res.status(500).json("Error al eliminar coche");
+  }
+}
+//eliminar coche
+export async function eliminarCoche(req: Request, res: Response, modelo:string, año:number) {
+  try {
+    // Buscar y eliminar el coche
+    const cocheEliminado = await CocheModel.findOneAndDelete({ modelo, año });
+
+    if (cocheEliminado) {
+    } else {
+      res.status(404).json("Coche no encontrado");
+    }
+  } catch (error) {
+    res.status(500).json("Error al eliminar coche");
+  }
+}
 // Enviar coches a un concesionario
 export async function EnviarCoche(req: Request, res: Response) {
   try {
-    //me a dado problemas el gestor de errores y no me los indica además de problemas de conxion a la base de datos
-    const { modelo, año } = req.body;
-
+    const modelo = "Focus2";
+    const año = 2023;
     const cocheExistente = await CocheModel.findOne({ modelo, año });
 
     if (cocheExistente) {
@@ -105,7 +126,19 @@ export async function EnviarCoche(req: Request, res: Response) {
       } else {
         concesionario.coches.push(cocheExistente);
         await concesionario.save();
-        res.status(200).json("Coche enviado a concesionario red1 con éxito");
+
+        await eliminarCoche(req, res, modelo, año);
+
+        // Devuelve toda la información del coche enviado
+        res.status(200).json({
+          message: "Coche enviado a concesionario red1 con éxito",
+          coche: {
+            marca: cocheExistente.marca,
+            modelo: cocheExistente.modelo,
+            año: cocheExistente.año,
+            precio: cocheExistente.precio,
+          },
+        });
       }
     } else {
       res.status(400).json("No se ha encontrado un coche con ese modelo y año");
@@ -114,9 +147,6 @@ export async function EnviarCoche(req: Request, res: Response) {
     res.status(500).json("Error al buscar y enviar coche");
   }
 }
-
-
-
 // Vender coches a un cliente
 export async function venderCocheACliente(req: Request, res: Response) {
   try {
@@ -140,7 +170,7 @@ export async function venderCocheACliente(req: Request, res: Response) {
       return;
     }
 
-    const coche = concesionario.coches.find((c: Coche) => c.modelo === modelo && c.año === año);
+    const coche = concesionario.coches.find((c) => c.modelo === modelo && c.año === año);
 
     if (!coche) {
       res.status(400).json("No se ha encontrado un coche con ese modelo y año en el concesionario");
@@ -161,36 +191,44 @@ export async function venderCocheACliente(req: Request, res: Response) {
     res.status(500).json("Error al buscar y comprar coche");
   }
 }
-
 // Lista de coches de un concesionario
 export async function ListaCochesConcesionario(req: Request, res: Response) {
   try {
-    //me a dado problemas el gestor de errores y no me los indica además de problemas de conxion a la base de datos
-    const { ubicacion } = req.params;
-    const concesionario = await ConcesionarioModel.findOne({ ubicacion: ubicacion }).populate("coches");
+    //const { ubicacion } = req.params;
+    const ubicacion = "red1"
+    const concesionario = await ConcesionarioModel.findOne({ ubicacion }).populate("coches");
 
     if (!concesionario) {
       res.status(404).json("Concesionario no encontrado");
       return;
     }
-    const listaCoches = concesionario.coches.map((coche:  Coche) => ({
-      marca: coche.marca,
-      modelo: coche.modelo,
-      año: coche.año,
-      precio: coche.precio,
-    }));
 
-    res.status(200).json({ message: "Lista de coches del concesionario obtenida con éxito", data: listaCoches })
-    } catch (error) {
+    if (concesionario.coches.length === 0) {
+      res.status(200).json({ message: "Concesionario sin coches", data: [] });
+      return;
+    }
+
+    // Obtén solo el primer coche del array
+    const primerCoche = concesionario.coches[0];
+
+    const cocheFormat = {
+      marca: primerCoche.marca,
+      modelo: primerCoche.modelo,
+      año: primerCoche.año,
+      precio: primerCoche.precio,
+    };
+
+    res.status(200).json({ message: "Primer coche del concesionario obtenido con éxito", data: cocheFormat });
+  } catch (error) {
     res.status(500).json("Error al obtener la lista de coches del concesionario");
   }
 }
-
 // Lista de coches de un cliente
 export async function listaCochesCliente(req: Request, res: Response) {
   try {
     //me a dado problemas el gestor de errores y no me los indica además de problemas de conxion a la base de datos
-    const nombreCliente = req.params.nombre;
+    //const nombreCliente = req.params.nombre;
+    const nombreCliente = "fernando";
 
     
     const cliente = await ClienteModel.findOne({ nombre: nombreCliente }).populate("coches");
@@ -205,13 +243,14 @@ export async function listaCochesCliente(req: Request, res: Response) {
     res.status(500).json("Error al obtener la lista de coches del cliente");
   }
 }
-
 // Eliminar coches de un concesionario
 export async function eliminarCocheConcesionario(req: Request, res: Response) {
   try {
     //me a dado problemas el gestor de errores y no me los indica además de problemas de conxion a la base de datos
-    const { ubicacion, modelo, año } = req.params;
-
+    //const { ubicacion, modelo, año } = req.params;
+    const ubicacion =  "red1"
+    const modelo= "focus"
+    const año= "2023"
     const concesionario = await ConcesionarioModel.findOne({ ubicacion }).populate("coches");
 
     if (!concesionario) {
@@ -233,12 +272,15 @@ export async function eliminarCocheConcesionario(req: Request, res: Response) {
     res.status(500).json("Error al eliminar coche del concesionario");
   }
 }
-
-// Aliminar coches de un cliente
+// Eliminr coches de un cliente
 export async function eliminarCocheCliente(req: Request, res: Response) {
   try {
     //me a dado problemas el gestor de errores y no me los indica además de problemas de conxion a la base de datos
-    const { nombre, modelo, año } = req.params;
+    //const { nombre, modelo, año } = req.params;
+    const nombre =  "fernando"
+    const modelo= "focus"
+    const año= "2023"
+    
     const cliente = await ClienteModel.findOne({ nombre }).populate("coches");
     if (!cliente) {
       res.status(404).json("Cliente no encontrado");
@@ -256,12 +298,15 @@ export async function eliminarCocheCliente(req: Request, res: Response) {
     res.status(500).json("Error al eliminar coche del cliente");
   }
 }
-
 // Araspasar un coche de un cliente a otro
 export async function traspasarCocheEntreClientes(req: Request, res: Response) {
   try {
     //me a dado problemas el gestor de errores y no me los indica además de problemas de conxion a la base de datos
-    const { from_nombre, to_nombre, modelo, año } = req.params;
+    //const { from_nombre, to_nombre, modelo, año } = req.params;
+    const from_nombre =  "fernando"
+    const to_nombre =  "david"
+    const modelo= "focus"
+    const año= "2023"
 
     const fromCliente = await ClienteModel.findOne({ nombre: from_nombre }).populate("coches");
     const toCliente = await ClienteModel.findOne({ nombre: to_nombre });
@@ -290,13 +335,13 @@ export async function traspasarCocheEntreClientes(req: Request, res: Response) {
     res.status(500).json("Error al traspasar coche entre clientes");
   }
 }
-
 // Añadir dinero a un cliente
 export async function sumarDineroCliente(req: Request, res: Response) {
   try {
     //me a dado problemas el gestor de errores y no me los indica además de problemas de conxion a la base de datos
-    const { nombre, cantidad } = req.params;
-
+    //const { nombre, cantidad } = req.params;
+    const nombre =  "fernando"
+    const cantidad =  "20000"
     const cliente = await ClienteModel.findOne({ nombre });
 
     if (!cliente) {
@@ -314,7 +359,5 @@ export async function sumarDineroCliente(req: Request, res: Response) {
     res.status(500).json("Error al sumar dinero al cliente");
   }
 }
-
-//bloquear la venta a ciertos concesionarios
 
 
