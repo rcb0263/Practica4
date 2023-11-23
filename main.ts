@@ -9,7 +9,7 @@ import {EnviarCoche, sumarDineroCliente, traspasarCocheEntreClientes, eliminarCo
 
 const env = await load();
 
-const URL_MONGO = env.MONGO_URL
+const URL_MONGO = env.MONGO_URL || Deno.env.get("MONGO_URL")
 
 console.info(URL_MONGO)
 
